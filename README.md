@@ -1,1 +1,1 @@
-# prism-client-ui
+# Prism Client

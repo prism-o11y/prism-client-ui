@@ -1,0 +1,13 @@
+**/.dockerignore
+**/node_modules
+**/npm_debug.log
+README.md
+**/.next
+**/!.next/static
+**/!.next/standalone
+**/.git
+**/.gitignore
+**/.env
+**/docker-compose*
+**/compose.y*ml
+**/Dockerfile*
