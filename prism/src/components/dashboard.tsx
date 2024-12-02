@@ -14,6 +14,7 @@ const lineChartData = [
   { name: '08:00', cpu: 45, memory: 70 },
   { name: '12:00', cpu: 60, memory: 80 },
   { name: '16:00', cpu: 75, memory: 85 },
+  { name: '20:00', cpu: 50, memory: 75 },
 ]
 
 const pieChartData = [
