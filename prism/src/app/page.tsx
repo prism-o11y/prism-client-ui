@@ -9,22 +9,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { toast, ToastContainer, TypeOptions } from 'react-toastify'
+import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-
-type Container = {
-    id: string;
-    app_name: string;
-    app_url: string;
-    status: string;
-    cpu_usage: number;
-    memory_usage: number;
-    metrics: Array<{ timestamp: string; cpu: number; memory: number }>;
-  };
-  
 // Example data
-const exampleContainers: Container[] = [
+const exampleContainers = [
   {
     id: '1',
     app_name: 'Web Server',
@@ -73,7 +62,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Simulating SSE for real-time notifications
     const interval = setInterval(() => {
-      const severities: TypeOptions[] = ['info', 'warning', 'error']
+      const severities = ['info', 'warning', 'error'] as const
       const randomSeverity = severities[Math.floor(Math.random() * severities.length)]
       toast(`New ${randomSeverity} alert for ${exampleContainers[Math.floor(Math.random() * exampleContainers.length)].app_name}`, { type: randomSeverity })
     }, 10000)
@@ -81,8 +70,21 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleContainerClick = (container : Container) => {
+  const handleContainerClick = (container: typeof exampleContainers[0]) => {
     router.push(`/container/${container.id}`)
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', { method: 'POST' })
+      if (response.ok) {
+        window.location.href = 'http://localhost:81/api/user-service/auth/login'
+      } else {
+        console.error('Logout failed')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   return (
@@ -123,7 +125,7 @@ export default function Dashboard() {
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-purple-100">
+                  <DropdownMenuItem className="hover:bg-purple-100" onSelect={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
