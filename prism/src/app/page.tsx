@@ -117,7 +117,7 @@ export default function Dashboard() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white/90 border-purple-400 text-purple-600 z-30">
-                  <DropdownMenuItem className="hover:bg-purple-100">
+                  <DropdownMenuItem className="hover:bg-purple-100" onClick={() => router.push('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     User Profile
                   </DropdownMenuItem>
