@@ -6,7 +6,7 @@ import { Bell, ChevronDown, Home, LogOut, Settings, User, X } from 'lucide-react
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ToastContainer } from 'react-toastify'
+import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 type Alert = {
@@ -97,7 +97,7 @@ export default function AlertsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white/90 border-purple-400 text-purple-600 z-30">
-                <DropdownMenuItem className="hover:bg-purple-100">
+                <DropdownMenuItem className="hover:bg-purple-100" onSelect={() => router.push('/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   User Profile
                 </DropdownMenuItem>
