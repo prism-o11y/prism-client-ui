@@ -8,17 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export default function Navbar() {
   const router = useRouter()
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/logout', { method: 'POST' })
-      if (response.ok) {
-        window.location.href = 'http://localhost:81/api/user-service/auth/login'
-      } else {
-        console.error('Logout failed')
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
+  const handleLogout = () => {
+    // Redirect to the login page
+    window.location.href = 'http://localhost:81/api/user-service/auth/logout'
   }
 
   return (
@@ -50,7 +42,7 @@ export default function Navbar() {
                 <User className="mr-2 h-4 w-4" />
                 User Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-purple-100" onSelect={handleLogout}>
+              <DropdownMenuItem className="hover:bg-purple-100" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
