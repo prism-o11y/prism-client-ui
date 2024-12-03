@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronDown, Container, Home, LogOut, Settings, User } from 'lucide-react'
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import Navbar from '@/components/Navbar'
 
 // Example data
 const exampleContainers = [
@@ -74,67 +72,13 @@ export default function Dashboard() {
     router.push(`/container/${container.id}`)
   }
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/logout', { method: 'POST' })
-      if (response.ok) {
-        window.location.href = 'http://localhost:81/api/user-service/auth/login'
-      } else {
-        console.error('Logout failed')
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-  }
-
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CrystalLogo-P27fJob0FKqEjWfCryYjFbEQ0cgxZs.png" alt="" className="w-full h-full object-cover" />
         </div>
-        <nav className="bg-white/10 backdrop-blur-lg p-4 relative z-20">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CrystalLogo-P27fJob0FKqEjWfCryYjFbEQ0cgxZs.png" alt="Prism Logo" className="h-8 w-8" />
-              <h1 className="text-2xl font-bold text-white">Prism</h1>
-            </div>
-            <div className="space-x-4">
-              <Button variant="ghost" className="text-white hover:bg-white/20">
-                <Home className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/alerts')}>
-                <Bell className="mr-2 h-4 w-4" />
-                Alerts
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-white hover:bg-white/20">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/90 border-purple-400 text-purple-600 z-30">
-                  <DropdownMenuItem className="hover:bg-purple-100" onClick={() => router.push('/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    User Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-purple-100">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-purple-100" onSelect={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </nav>
-
+        <Navbar />
         <main className="container mx-auto mt-8 px-4 relative z-10">
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Containers Overview</h2>

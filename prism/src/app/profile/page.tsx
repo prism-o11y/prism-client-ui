@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Bell, ChevronDown, Home, LogOut, Settings, User, Plus, Trash2, UserPlus, LogIn } from 'lucide-react'
+import { Plus, Trash2, UserPlus, LogIn } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { toast } from 'react-toastify'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import Navbar from '@/components/Navbar'
 
 type Organization = {
   id: string
@@ -17,7 +17,6 @@ type Organization = {
 }
 
 export default function UserProfile() {
-  const router = useRouter()
   const [email, setEmail] = useState('user@example.com') // Replace with actual user email
   const [organizations, setOrganizations] = useState<Organization[]>([
     { id: '1', name: 'Org 1' },
@@ -25,19 +24,6 @@ export default function UserProfile() {
   ])
   const [newOrgName, setNewOrgName] = useState('')
   const [newUserEmail, setNewUserEmail] = useState('')
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/logout', { method: 'POST' })
-      if (response.ok) {
-        window.location.href = 'http://localhost:81/api/user-service/auth/login'
-      } else {
-        console.error('Logout failed')
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-  }
 
   const handleAddOrg = () => {
     if (newOrgName) {
@@ -79,48 +65,7 @@ export default function UserProfile() {
       <div className="absolute inset-0 opacity-10">
         <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CrystalLogo-P27fJob0FKqEjWfCryYjFbEQ0cgxZs.png" alt="" className="w-full h-full object-cover" />
       </div>
-      <nav className="bg-white/10 backdrop-blur-lg p-4 relative z-20">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CrystalLogo-P27fJob0FKqEjWfCryYjFbEQ0cgxZs.png" alt="Prism Logo" className="h-8 w-8" />
-            <h1 className="text-2xl font-bold text-white">Prism</h1>
-          </div>
-          <div className="space-x-4">
-            <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/')}>
-              <Home className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/alerts')}>
-              <Bell className="mr-2 h-4 w-4" />
-              Alerts
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-white/20">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white/90 border-purple-400 text-purple-600 z-30">
-                <DropdownMenuItem className="hover:bg-purple-100">
-                  <User className="mr-2 h-4 w-4" />
-                  User Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-purple-100">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-purple-100" onSelect={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       <main className="container mx-auto mt-8 px-4 relative z-10">
         <Card className="bg-white/20 backdrop-blur-lg border-purple-300 text-white mb-8">
           <CardHeader>
@@ -200,6 +145,7 @@ export default function UserProfile() {
           </CardContent>
         </Card>
       </main>
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   )
 }
