@@ -5,12 +5,6 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const jwtCookie = request.cookies.get('jwt')
 
-  // Exclude API routes and static assets from the middleware
-  if (request.nextUrl.pathname.startsWith('/api') || 
-      request.nextUrl.pathname.startsWith('/_next') ||
-      request.nextUrl.pathname.endsWith('.png')) {
-    return NextResponse.next()
-  }
 
   // If there's a JWT cookie, redirect to the home page
   if (jwtCookie) {

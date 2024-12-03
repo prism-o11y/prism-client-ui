@@ -104,7 +104,7 @@ export default function Dashboard() {
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/20">
+              <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/alerts')}>
                 <Bell className="mr-2 h-4 w-4" />
                 Alerts
               </Button>
