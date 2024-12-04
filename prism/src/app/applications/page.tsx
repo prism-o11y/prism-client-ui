@@ -23,25 +23,29 @@ export default function UserApplications() {
   const [newAppUrl, setNewAppUrl] = useState('');
   const [editApp, setEditApp] = useState<Application | null>(null);
 
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        const response = await fetch('http://localhost:81/api/user-service/apps/get-app-by-user-id', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setApplications(data.data || []);
-        } else if (response.status === 401) {
-          window.location.href = 'http://localhost:81/api/user-service/auth/login';
-        } else {
-            setApplications([]);
-        }
-      } catch (error) {
-        console.error('Error fetching applications:', error);
+  const fetchApplications = async () => {
+    try {
+      const response = await fetch('http://localhost:81/api/user-service/apps/get-app-by-user-id', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const apps = data.data.map((app: any) => ({
+          app_url: app.app_url,
+          app_name: app.app_name,
+        }));
+        setApplications(apps);
+      } else if (response.status === 401) {
+        window.location.href = 'http://localhost:81/api/user-service/auth/login';
+      } else {
+        setApplications([]);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchApplications();
   }, []);
 
@@ -50,7 +54,7 @@ export default function UserApplications() {
       toast.error('Both application name and URL are required.');
       return;
     }
-  
+
     try {
       const response = await fetch('http://localhost:81/api/user-service/apps/add-app', {
         method: 'POST',
@@ -60,6 +64,39 @@ export default function UserApplications() {
         credentials: 'include',
         body: JSON.stringify({ app_name: newAppName, app_url: newAppUrl }),
       });
+
+      if (response.status === 401) {
+        window.location.href = 'http://localhost:81/api/user-service/auth/login';
+        return;
+      }
+
+      if (response.ok) {
+        toast.info(`Application "${newAppName}" is being added. Please wait...`);
+        setNewAppName('');
+        setNewAppUrl('');
+
+        // Simulate a wait for Kafka to process the app creation
+        setTimeout(async () => {
+          await fetchApplications();
+        }, 3000); // Wait for 3 seconds
+      }
+    } catch (error) {
+      console.error('Error adding application:', error);
+    }
+  };
+
+  const handleEditApplication = async () => {
+    if (!editApp) return;
+
+    try {
+      const response = await fetch('http://localhost:81/api/user-service/apps/update-app', {
+        method: 'POST', // Use POST since the backend likely expects this for Kafka processing
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ app_name: editApp.app_name, app_url: editApp.app_url }),
+      });
   
       if (response.status === 401) {
         window.location.href = 'http://localhost:81/api/user-service/auth/login';
@@ -67,71 +104,72 @@ export default function UserApplications() {
       }
   
       if (response.ok) {
-        toast.info(`Application "${newAppName}" is being added. Please wait...`);
-        setNewAppName('');
-        setNewAppUrl('');
+        setEditApp(null); // Reset the edit state
   
-        // Simulate a wait for Kafka to process the application addition
         setTimeout(async () => {
           try {
-            const fetchAppsResponse = await fetch('http://localhost:81/api/user-service/apps/get-apps-by-user-id', {
+            const fetchAppsResponse = await fetch('http://localhost:81/api/user-service/apps/get-app-by-user-id', {
               credentials: 'include',
             });
             if (fetchAppsResponse.ok) {
               const data = await fetchAppsResponse.json();
-              setApplications(data.data);
+              const apps = data.data.map((app: any) => ({
+                app_url: app.app_url,
+                app_name: app.app_name,
+              }));
+              setApplications(apps);
             } 
           } catch (fetchError) {
             console.error('Error fetching applications:', fetchError);
           }
-        }, 3000); // Wait for 3 seconds
+        }, 5000); // Wait for 3 seconds to allow Kafka processing
       } 
-    } catch (error) {
-      console.error('Error adding application:', error);
-    }
-  };
-  
-
-  const handleEditApplication = async () => {
-    if (!editApp) return;
-
-    try {
-      const response = await fetch('http://localhost:81/api/user-service/apps/update-app', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(editApp),
-      });
-
-      if (response.ok) {
-        setApplications(
-          applications.map(app => (app.app_url === editApp.app_url ? editApp : app))
-        );
-        toast.success(`Application "${editApp.app_name}" updated successfully.`);
-        setEditApp(null);
-      } else {
-        toast.error('Failed to update application.');
-      }
     } catch (error) {
       console.error('Error updating application:', error);
     }
   };
 
-  const handleDeleteApplication = async (app:Application) => {
+  const handleDeleteApplication = async (app: Application) => {
     try {
       const response = await fetch('http://localhost:81/api/user-service/apps/delete-app', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
-        body: JSON.stringify({ app_url: app.app_url, app_name: app.app_name}),
+        body: JSON.stringify({ app_url: app.app_url, app_name: app.app_name }),
       });
 
-      if (response.ok) {
-        setApplications(applications.filter(app => app.app_url !== app.app_url));
-        toast.success('Application deleted successfully.');
-      } else {
-        toast.error('Failed to delete application.');
+      if (response.status === 401) {
+        window.location.href = 'http://localhost:81/api/user-service/auth/login';
+        return;
       }
+
+      if (response.ok) {
+        toast.info(`Application "${app.app_name}" is being deleted. Please wait...`);
+
+        // Simulate a wait for Kafka to process the app deletion
+        setTimeout(async () => {
+          const fetchAppsResponse = await fetch('http://localhost:81/api/user-service/apps/get-app-by-user-id', {
+            credentials: 'include',
+          });
+
+          if (fetchAppsResponse.ok) {
+            const data = await fetchAppsResponse.json();
+            const apps = data.data.map((app: any) => ({
+              app_url: app.app_url,
+              app_name: app.app_name,
+            }));
+            setApplications(apps);
+
+            if (apps.some((a: Application) => a.app_url === app.app_url)) {
+              toast.error(`Failed to delete the application. It still exists.`);
+            } 
+          } else {
+            setApplications([]);
+          }
+        }, 3000); // Wait for 3 seconds
+      } 
     } catch (error) {
       console.error('Error deleting application:', error);
     }
@@ -145,10 +183,33 @@ export default function UserApplications() {
       <Navbar />
       <main className="container mx-auto mt-8 px-4 relative z-10">
         <Card className="bg-white/20 backdrop-blur-lg border-purple-300 text-white mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Applications</CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="mb-6">
-              <h3 className="text-xl font-semibold mb-2">Applications</h3>
               <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Add New Application</h3>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={newAppName}
+                      onChange={(e) => setNewAppName(e.target.value)}
+                      placeholder="Application Name"
+                      className="bg-white/10 text-white"
+                    />
+                    <Input
+                      value={newAppUrl}
+                      onChange={(e) => setNewAppUrl(e.target.value)}
+                      placeholder="Application URL"
+                      className="bg-white/10 text-white"
+                    />
+                    <Button onClick={handleAddApplication}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add App
+                    </Button>
+                  </div>
+                </div>
                 {applications.map(app => (
                   <Card key={app.app_url} className="bg-white/10">
                     <CardHeader>
@@ -192,27 +253,6 @@ export default function UserApplications() {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Add New Application</h3>
-              <div className="flex space-x-2">
-                <Input
-                  value={newAppName}
-                  onChange={(e) => setNewAppName(e.target.value)}
-                  placeholder="Application Name"
-                  className="bg-white/10 text-white"
-                />
-                <Input
-                  value={newAppUrl}
-                  onChange={(e) => setNewAppUrl(e.target.value)}
-                  placeholder="Application URL"
-                  className="bg-white/10 text-white"
-                />
-                <Button onClick={handleAddApplication}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add App
-                </Button>
               </div>
             </div>
           </CardContent>
