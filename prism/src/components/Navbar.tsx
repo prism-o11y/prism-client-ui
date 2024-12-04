@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronDown, Home, LogOut, User } from 'lucide-react'
+import { Bell, ChevronDown, Home, LogOut, User, Code } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -28,6 +28,10 @@ export default function Navbar() {
           <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/alerts')}>
             <Bell className="mr-2 h-4 w-4" />
             Alerts
+          </Button>
+          <Button variant="ghost" className="text-white hover:bg-white/20" onClick={() => router.push('/applications')}>
+            <Code className="mr-2 h-4 w-4" />
+            Applications
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
