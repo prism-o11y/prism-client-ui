@@ -12,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import Navbar from '@/components/Navbar'
 
 type Organization = {
-  id: string
+  org_id: string
   name: string
 }
 
@@ -20,8 +20,8 @@ type Organization = {
 export default function UserProfile() {
   const [email, setEmail] = useState('') // Replace with actual user email
   const [organizations, setOrganizations] = useState<Organization[]>([
-    { id: '1', name: 'Org 1' },
-    { id: '2', name: 'Org 2' },
+    { org_id: '1', name: 'Org 1' },
+    { org_id: '2', name: 'Org 2' },
   ])
   const [newOrgName, setNewOrgName] = useState('')
   const [newUserEmail, setNewUserEmail] = useState('')
@@ -49,22 +49,48 @@ export default function UserProfile() {
     fetchUserEmail()
   }, [])
 
-  const handleAddOrg = () => {
-    if (newOrgName) {
-      const newOrg: Organization = {
-        id: Date.now().toString(),
-        name: newOrgName,
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        fetch('http://localhost:81/api/org-service/org/get-orgs-by-user-id', {
+          credentials: 'include',
+        })
+          .then(response => response.json())
+          .then(data => {
+            setOrganizations(
+              data.data.map((org: any) => ({
+                org_id: org.org_id,
+                name: org.name,
+              }))
+            )
+          })
+          .catch(error => {
+            console.error('Error fetching organizations:', error)
+          })
+      } catch (error) {
+        console.error('Error fetching organizations:', error)
       }
-      setOrganizations([...organizations, newOrg])
-      setNewOrgName('')
-      toast.success(`Organization "${newOrgName}" added successfully`)
     }
+
+    fetchOrganizations()
+  })
+
+  const handleAddOrg = () => {
+    // if (newOrgName) {
+    //   const newOrg: Organization = {
+    //     id: Date.now().toString(),
+    //     name: newOrgName,
+    //   }
+    //   setOrganizations([...organizations, newOrg])
+    //   setNewOrgName('')
+    //   toast.success(`Organization "${newOrgName}" added successfully`)
+    // }
   }
 
   const handleDeleteOrg = (orgId: string) => {
-    const orgToDelete = organizations.find(org => org.id === orgId)
+    const orgToDelete = organizations.find(org => org.org_id === orgId)
     if (orgToDelete) {
-      setOrganizations(organizations.filter(org => org.id !== orgId))
+      setOrganizations(organizations.filter(org => org.org_id !== orgId))
       toast.success(`Organization "${orgToDelete.name}" deleted successfully`)
     }
   }
@@ -77,9 +103,9 @@ export default function UserProfile() {
   }
 
   const handleLeaveOrg = (orgId: string) => {
-    const orgToLeave = organizations.find(org => org.id === orgId)
+    const orgToLeave = organizations.find(org => org.org_id === orgId)
     if (orgToLeave) {
-      setOrganizations(organizations.filter(org => org.id !== orgId))
+      setOrganizations(organizations.filter(org => org.org_id !== orgId))
       toast.success(`You have left the organization "${orgToLeave.name}"`)
     }
   }
@@ -105,7 +131,7 @@ export default function UserProfile() {
               <h3 className="text-xl font-semibold mb-2">Organizations</h3>
               <div className="space-y-4">
                 {organizations.map(org => (
-                  <Card key={org.id} className="bg-white/10">
+                  <Card key={org.org_id} className="bg-white/10">
                     <CardHeader>
                       <CardTitle className="text-lg">{org.name}</CardTitle>
                     </CardHeader>
@@ -136,11 +162,11 @@ export default function UserProfile() {
                             </div>
                           </DialogContent>
                         </Dialog>
-                        <Button variant="outline" size="sm" onClick={() => handleLeaveOrg(org.id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleLeaveOrg(org.org_id)}>
                           <LogIn className="mr-2 h-4 w-4" />
                           Leave Org
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteOrg(org.id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteOrg(org.org_id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Org
                         </Button>
