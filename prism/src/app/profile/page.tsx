@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, UserPlus, LogIn } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,14 +16,38 @@ type Organization = {
   name: string
 }
 
+
 export default function UserProfile() {
-  const [email, setEmail] = useState('user@example.com') // Replace with actual user email
+  const [email, setEmail] = useState('') // Replace with actual user email
   const [organizations, setOrganizations] = useState<Organization[]>([
     { id: '1', name: 'Org 1' },
     { id: '2', name: 'Org 2' },
   ])
   const [newOrgName, setNewOrgName] = useState('')
   const [newUserEmail, setNewUserEmail] = useState('')
+
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        fetch('http://localhost:81/api/user-service/user/get-user-by-id', {
+          credentials: 'include',
+        })
+          .then(response => response.json())
+          .then(data => {
+            setEmail(data.data.email)
+          })
+          .catch(error => {
+            console.error('Error fetching user email:', error)
+            window.location.href = 'http://localhost:81/api/user-service/auth/login'
+          })
+      } catch (error) {
+        console.error('Error fetching user email:', error)
+        window.location.href = 'http://localhost:81/api/user-service/auth/login'
+      }
+    }
+
+    fetchUserEmail()
+  }, [])
 
   const handleAddOrg = () => {
     if (newOrgName) {
