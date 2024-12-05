@@ -16,97 +16,253 @@ type Organization = {
   name: string
 }
 
-
 export default function UserProfile() {
   const [email, setEmail] = useState('') // Replace with actual user email
-  const [organizations, setOrganizations] = useState<Organization[]>([
-    { org_id: '1', name: 'Org 1' },
-    { org_id: '2', name: 'Org 2' },
-  ])
+  const [organization, setOrganization] = useState<Organization | null>(null)
   const [newOrgName, setNewOrgName] = useState('')
   const [newUserEmail, setNewUserEmail] = useState('')
 
   useEffect(() => {
     const fetchUserEmail = async () => {
       try {
-        fetch('http://localhost:81/api/user-service/user/get-user-by-id', {
-          credentials: 'include',
-        })
-          .then(response => response.json())
-          .then(data => {
-            setEmail(data.data.email)
-          })
-          .catch(error => {
-            console.error('Error fetching user email:', error)
-            window.location.href = 'http://localhost:81/api/user-service/auth/login'
-          })
+        const response = await fetch('http://localhost:81/api/user-service/user/get-user-by-id',
+          {
+            credentials: 'include',
+          }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          setEmail(data.data.email)
+        } else {
+          window.location.href = 'http://localhost:81/api/user-service/auth/login'
+        }
       } catch (error) {
         console.error('Error fetching user email:', error)
         window.location.href = 'http://localhost:81/api/user-service/auth/login'
       }
     }
 
-    fetchUserEmail()
-  }, [])
-
-  useEffect(() => {
-    const fetchOrganizations = async () => {
+    const fetchOrganization = async () => {
       try {
-        fetch('http://localhost:81/api/org-service/org/get-orgs-by-user-id', {
-          credentials: 'include',
-        })
-          .then(response => response.json())
-          .then(data => {
-            setOrganizations(
-              data.data.map((org: any) => ({
-                org_id: org.org_id,
-                name: org.name,
-              }))
-            )
+        const response = await fetch('http://localhost:81/api/user-service/org/get-org-by-user-id',
+          {
+            credentials: 'include',
+          }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          setOrganization({
+            org_id: data.data.org_id,
+            name: data.data.name,
           })
-          .catch(error => {
-            console.error('Error fetching organizations:', error)
-          })
+        } else if (response.status === 404) {
+          console.log('No organization found')
+        } else {
+          window.location.href = 'http://localhost:81/api/user-service/auth/login'
+        }
       } catch (error) {
-        console.error('Error fetching organizations:', error)
+        console.error('Error fetching organization:', error)
+        window.location.href = 'http://localhost:81/api/user-service/auth/login'
       }
     }
 
-    fetchOrganizations()
-  })
+    fetchUserEmail()
+    fetchOrganization()
+  }, [])
 
-  const handleAddOrg = () => {
-    // if (newOrgName) {
-    //   const newOrg: Organization = {
-    //     id: Date.now().toString(),
-    //     name: newOrgName,
-    //   }
-    //   setOrganizations([...organizations, newOrg])
-    //   setNewOrgName('')
-    //   toast.success(`Organization "${newOrgName}" added successfully`)
-    // }
+  const handleAddOrg = async() => {
+    if (newOrgName) {
+      try {
+        const response = await fetch('http://localhost:81/api/user-service/org/create-org', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ name: newOrgName }),
+        });
+  
+        if (response.status === 401) {
+          window.location.href = 'http://localhost:81/api/user-service/auth/login';
+          return;
+        }
+  
+        if (response.ok) {
+          toast.info(`Organization "${newOrgName}" is being created. Please wait...`);
+          setNewOrgName(''); // Clear the input field
+  
+          // Simulate a wait for Kafka to process the org creation
+          setTimeout(async () => {
+            const fetchOrgResponse = await fetch('http://localhost:81/api/user-service/org/get-org-by-user-id',
+              {
+                credentials: 'include',
+              }
+            );
+            if (fetchOrgResponse.ok) {
+              const data = await fetchOrgResponse.json();
+              setOrganization({
+                org_id: data.data.org_id,
+                name: data.data.name,
+              });
+            }
+          }, 3000); // Wait for 3 seconds
+        }
+      } catch (error) {
+        console.error('Error adding organization:', error);
+      }
+    } else {
+      toast.error('Organization name cannot be empty.');
+    }
+  
   }
 
-  const handleDeleteOrg = (orgId: string) => {
-    const orgToDelete = organizations.find(org => org.org_id === orgId)
-    if (orgToDelete) {
-      setOrganizations(organizations.filter(org => org.org_id !== orgId))
-      toast.success(`Organization "${orgToDelete.name}" deleted successfully`)
+  const handleDeleteOrg = async() => {
+    try {
+      const response = await fetch('http://localhost:81/api/user-service/org/delete-org', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.status === 401) {
+        window.location.href = 'http://localhost:81/api/user-service/auth/login';
+        return;
+      }
+
+      if (response.ok) {
+        toast.info(`Organization "${organization?.name}" is being deleted. Please wait...`);
+
+        // Simulate a wait for Kafka to process the org deletion
+        setTimeout(async () => {
+          const fetchOrgResponse = await fetch('http://localhost:81/api/user-service/org/get-org-by-user-id', {
+            credentials: 'include',
+          });
+
+          if (fetchOrgResponse.ok) {
+            const data = await fetchOrgResponse.json();
+            if (data.data) {
+              setOrganization({
+                org_id: data.data.org_id,
+                name: data.data.name,
+              });
+              toast.error(`Failed to delete the organization. It still exists.`);
+            } else {
+              setOrganization(null);
+            }
+          } else {
+            setOrganization(null);
+          }
+        }, 3000); // Wait for 3 seconds
+      } else {
+      }
+    } catch (error) {
+      console.error('Error deleting organization:', error);
     }
   }
 
-  const handleAddUser = (orgName: string) => {
-    if (newUserEmail) {
-      toast.success(`User ${newUserEmail} added to ${orgName}`)
-      setNewUserEmail('')
+  const handleAddUser = async () => {
+    if (newUserEmail && organization) {
+      try {
+        const response = await fetch('http://localhost:81/api/user-service/org/add-user-to-org', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include user's cookie
+          body: JSON.stringify({
+            email: newUserEmail,         // Email of the user to be added
+          }),
+        });
+  
+        if (response.status === 401) {
+          window.location.href = 'http://localhost:81/api/user-service/auth/login';
+          return;
+        }
+  
+        if (response.ok) {
+          setNewUserEmail(''); // Clear the input field
+  
+          // Simulate Kafka delay (3 seconds) to confirm the user addition
+          setTimeout(async () => {
+            try {
+              const fetchOrgResponse = await fetch('http://localhost:81/api/user-service/org/get-org-by-user-id', {
+                credentials: 'include',
+              });
+  
+              if (fetchOrgResponse.ok) {
+                const data = await fetchOrgResponse.json();
+                setOrganization({
+                  org_id: data.data.org_id,
+                  name: data.data.name,
+                });
+              } else {
+
+              }
+            } catch (error) {
+              console.error('Error fetching organization after Kafka delay:', error);
+            }
+          }, 3000); // Wait for 3 seconds (Kafka delay)
+        }
+      } catch (error) {
+        console.error('Error adding user:', error);
+      }
+    } else {
+      toast.error('User email cannot be empty.');
     }
+  
   }
 
-  const handleLeaveOrg = (orgId: string) => {
-    const orgToLeave = organizations.find(org => org.org_id === orgId)
-    if (orgToLeave) {
-      setOrganizations(organizations.filter(org => org.org_id !== orgId))
-      toast.success(`You have left the organization "${orgToLeave.name}"`)
+  const handleLeaveOrg = async() => {
+    if (organization) {
+      try {
+        const response = await fetch('http://localhost:81/api/user-service/org/remove-user-from-org', {
+          method: 'DELETE',
+          credentials: 'include', // Include user's cookie for authentication
+        });
+  
+        if (response.status === 401) {
+          window.location.href = 'http://localhost:81/api/user-service/auth/login';
+          return;
+        }
+  
+        if (response.ok) {
+          toast.info(`You are leaving the organization "${organization.name}". Please wait...`);
+  
+          // Simulate Kafka delay (3 seconds) to confirm the user removal
+          setTimeout(async () => {
+            try {
+              const fetchOrgResponse = await fetch('http://localhost:81/api/user-service/org/get-org-by-user-id', {
+                credentials: 'include',
+              });
+  
+              if (fetchOrgResponse.ok) {
+                const data = await fetchOrgResponse.json();
+                if (data.data) {
+                  setOrganization({
+                    org_id: data.data.org_id,
+                    name: data.data.name,
+                  });
+                  toast.error(`Failed to leave the organization. It still exists.`);
+                } else {
+                  setOrganization(null);
+                }
+              } else {
+                setOrganization(null);
+              }
+            } catch (error) {
+              console.error('Error verifying organization after Kafka delay:', error);
+            }
+          }, 3000); // Wait for 3 seconds (Kafka delay)
+        } else {
+          const errorData = await response.json();
+        }
+      } catch (error) {
+        console.error('Error leaving organization:', error);
+      }
+    } else {
+      toast.error('No organization found to leave.');
     }
   }
 
@@ -130,10 +286,10 @@ export default function UserProfile() {
             <div className="mb-6">
               <h3 className="text-xl font-semibold mb-2">Organizations</h3>
               <div className="space-y-4">
-                {organizations.map(org => (
-                  <Card key={org.org_id} className="bg-white/10">
+                {organization ? (
+                  <Card key={organization.org_id} className="bg-white/10">
                     <CardHeader>
-                      <CardTitle className="text-lg">{org.name}</CardTitle>
+                      <CardTitle className="text-lg">{organization.name}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="mt-2 space-x-2">
@@ -146,7 +302,7 @@ export default function UserProfile() {
                           </DialogTrigger>
                           <DialogContent className="bg-white text-black">
                             <DialogHeader>
-                              <DialogTitle>Add User to {org.name}</DialogTitle>
+                              <DialogTitle>Add User to {organization.name}</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
                               <Label htmlFor="newUserEmail">User Email</Label>
@@ -156,24 +312,26 @@ export default function UserProfile() {
                                 onChange={(e) => setNewUserEmail(e.target.value)}
                                 placeholder="user@example.com"
                               />
-                              <Button onClick={() => handleAddUser(org.name)}>
+                              <Button onClick={() => handleAddUser()}>
                                 Add User
                               </Button>
                             </div>
                           </DialogContent>
                         </Dialog>
-                        <Button variant="outline" size="sm" onClick={() => handleLeaveOrg(org.org_id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleLeaveOrg()}>
                           <LogIn className="mr-2 h-4 w-4" />
                           Leave Org
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteOrg(org.org_id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteOrg()}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Org
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                ) : (
+                  <p>No organizations available</p>
+                )}
               </div>
             </div>
 
