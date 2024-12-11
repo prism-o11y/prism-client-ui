@@ -33,7 +33,7 @@ PRISM is a multi-tenant DevOps and observability tool designed to capture metric
 
 ### Docker Compose Configuration
 
-Below is the `docker-compose.yml` configuration used for the project:
+Below is the `compose.yml` configuration used for the project:
 
 ```yaml
 services:
